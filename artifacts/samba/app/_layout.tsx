@@ -14,6 +14,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { BookingProvider } from '@/context/BookingContext';
+import { AccountProvider } from '@/context/AccountContext';
 import '../global.css';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -26,6 +27,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="provider/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="provider-hub" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -51,11 +53,13 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <BookingProvider>
-            <GestureHandlerRootView>
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
+            <AccountProvider>
+              <GestureHandlerRootView>
+                <KeyboardProvider>
+                  <RootLayoutNav />
+                </KeyboardProvider>
+              </GestureHandlerRootView>
+            </AccountProvider>
           </BookingProvider>
         </QueryClientProvider>
       </ErrorBoundary>
