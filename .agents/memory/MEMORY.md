@@ -1,1 +1,2 @@
 - [NativeWind Expo web setup](nativewind-expo-web.md) — add the CSS interop peer and use class-based dark mode for Expo web startup.
+- [Expo preview process reset](expo-preview-process-reset.md) — stop the managed Expo workflow before restarting when duplicate port processes cause stale or incorrect preview frames.
