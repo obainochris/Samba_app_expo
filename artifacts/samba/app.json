@@ -16,7 +16,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Samba to use your location to validate house-call distance."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

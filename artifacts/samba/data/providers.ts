@@ -16,6 +16,11 @@ export interface Provider {
   verified: boolean;
   availableToday: boolean;
   bio: string;
+  latitude: number;
+  longitude: number;
+  serviceRadiusKm: number;
+  baseTravelFee: number;
+  travelFeePerKm: number;
   services: { name: string; duration: string; price: string }[];
 }
 
@@ -35,6 +40,11 @@ export const providers: Provider[] = [
     verified: true,
     availableToday: true,
     bio: 'I create soft, considered styles that help you feel like your best self. From knotless braids to silk presses, every appointment is unrushed and personal.',
+    latitude: 6.4350,
+    longitude: 3.4700,
+    serviceRadiusKm: 8,
+    baseTravelFee: 2500,
+    travelFeePerKm: 400,
     services: [
       { name: 'Knotless braids', duration: '3 hr 30 min', price: '₦35,000' },
       { name: 'Silk press', duration: '1 hr 30 min', price: '₦18,000' },
@@ -56,6 +66,11 @@ export const providers: Provider[] = [
     verified: true,
     availableToday: true,
     bio: 'Clean lines, calm energy, and a cut that grows out beautifully. I bring the barbershop experience to your door or welcome you at the studio.',
+    latitude: 6.5158,
+    longitude: 3.3792,
+    serviceRadiusKm: 8,
+    baseTravelFee: 2000,
+    travelFeePerKm: 350,
     services: [
       { name: 'Signature fade', duration: '45 min', price: '₦8,000' },
       { name: 'Fade & beard sculpt', duration: '1 hr', price: '₦12,000' },
@@ -77,6 +92,11 @@ export const providers: Provider[] = [
     verified: true,
     availableToday: false,
     bio: 'Makeup that still looks like you, just more rested. I specialise in soft glam for celebrations, photoshoots, and the moments you want to remember.',
+    latitude: 6.4281,
+    longitude: 3.4219,
+    serviceRadiusKm: 10,
+    baseTravelFee: 3000,
+    travelFeePerKm: 450,
     services: [
       { name: 'Soft glam', duration: '1 hr 15 min', price: '₦25,000' },
       { name: 'Bridal trial', duration: '2 hr', price: '₦40,000' },
