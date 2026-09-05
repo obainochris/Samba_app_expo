@@ -160,7 +160,7 @@ export default function ProviderDetailScreen() {
               <View className="items-center"><Feather name="home" size={16} color={mode === 'home' ? '#D86D55' : '#8B8581'} /><Text className={'mt-1 text-[12px] font-semibold ' + (mode === 'home' ? 'text-ink' : 'text-smoke')}>Home / office</Text></View>
             </Pressable>
             <Pressable onPress={() => setMode('shop')} className={'flex-1 rounded-[14px] py-3.5 ' + (mode === 'shop' ? 'bg-white' : '')}>
-              <View className="items-center"><Feather name="map-pin" size={16} color={mode === 'shop' ? '#D86D55' : '#8B8581'} /><Text className={'mt-1 text-[12px] font-semibold ' + (mode === 'shop' ? 'text-ink' : 'text-smoke')}>Their place</Text></View>
+              <View className="items-center"><Feather name="map-pin" size={16} color={mode === 'shop' ? '#D86D55' : '#8B8581'} /><Text className={'mt-1 text-[12px] font-semibold ' + (mode === 'shop' ? 'text-ink' : 'text-smoke')}>In-Shop</Text></View>
             </Pressable>
           </View>
 
