@@ -22,6 +22,12 @@
         {
           "locationWhenInUsePermission": "Allow Samba to use your location to validate house-call distance."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Samba to choose profile and portfolio photos."
+        }
       ]
     ],
     "experiments": {

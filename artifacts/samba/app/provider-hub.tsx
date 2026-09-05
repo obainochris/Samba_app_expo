@@ -1,5 +1,6 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
@@ -25,6 +26,8 @@ export default function ProviderHubScreen() {
   const [specialty, setSpecialty] = useState(providerAccount.specialty);
   const [location, setLocation] = useState(providerAccount.location);
   const [startingPrice, setStartingPrice] = useState(providerAccount.startingPrice);
+  const [profileImageUri, setProfileImageUri] = useState(providerAccount.profileImageUri ?? '');
+  const [portfolioUris, setPortfolioUris] = useState<string[]>(providerAccount.portfolioUris ?? []);
 
   const switchToClient = async () => {
     await setMode('client');
@@ -37,8 +40,31 @@ export default function ProviderHubScreen() {
       return;
     }
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await saveProviderAccount({ displayName: displayName.trim(), category, specialty: specialty.trim(), location: location.trim(), startingPrice: startingPrice.trim(), isLive: providerAccount.isLive });
+    await saveProviderAccount({ displayName: displayName.trim(), category, specialty: specialty.trim(), location: location.trim(), startingPrice: startingPrice.trim(), isLive: providerAccount.isLive, profileImageUri, portfolioUris });
     Alert.alert('Provider profile saved', 'Your Provider Hub profile is ready to share with Samba clients.');
+  };
+
+  const pickImage = async (onPicked: (uri: string) => void, aspect: [number, number]) => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Photo access needed', 'Allow Samba to access your photos to add an image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect,
+      quality: 0.82,
+    });
+    if (!result.canceled && result.assets[0]?.uri) onPicked(result.assets[0].uri);
+  };
+
+  const addPortfolioImage = async () => {
+    if (portfolioUris.length >= 6) {
+      Alert.alert('Portfolio is full', 'You can showcase up to six portfolio images.');
+      return;
+    }
+    await pickImage((uri) => setPortfolioUris((current) => [...current, uri]), [4, 3]);
   };
 
   const toggleLive = async () => {
@@ -97,6 +123,13 @@ export default function ProviderHubScreen() {
 
           <View className="mt-7 flex-row items-end justify-between"><View><Text className="text-[21px] font-bold text-ink">Provider account</Text><Text className="mt-1 text-[13px] text-smoke">This is how clients will see you.</Text></View><View className="rounded-full bg-blush px-3 py-1.5"><Text className="text-[11px] font-bold text-terracotta">{providerAccount.displayName ? 'Complete' : '60% complete'}</Text></View></View>
           <View className="mt-4 rounded-[23px] bg-white p-4">
+             <Text className="text-[12px] font-bold uppercase tracking-[1px] text-smoke">Profile picture</Text>
+             <View className="mt-3 flex-row items-center">
+               <Pressable onPress={() => pickImage(setProfileImageUri, [1, 1])} className="h-[76px] w-[76px] overflow-hidden rounded-full bg-cream active:opacity-75">
+                 {profileImageUri ? <Image source={{ uri: profileImageUri }} style={{ width: 76, height: 76 }} resizeMode="cover" /> : <View className="flex-1 items-center justify-center"><Feather name="camera" size={22} color="#2D6CDF" /></View>}
+               </Pressable>
+               <View className="ml-3 flex-1"><Text className="text-[14px] font-bold text-ink">Show clients who you are</Text><Text className="mt-1 text-[12px] leading-5 text-smoke">Add a clear headshot or studio image to your public profile.</Text><Pressable onPress={() => pickImage(setProfileImageUri, [1, 1])} className="mt-2 self-start"><Text className="text-[12px] font-bold text-banner">{profileImageUri ? 'Change photo' : 'Add profile photo'}</Text></Pressable></View>
+             </View>
             <Text className="text-[12px] font-bold uppercase tracking-[1px] text-smoke">Public name</Text>
             <TextInput value={displayName} onChangeText={setDisplayName} placeholder="e.g. Amara Hair Studio" placeholderTextColor="#A8B2C1" className="mt-2 rounded-[14px] bg-cream px-3.5 py-3.5 text-[14px] text-ink" />
             <Text className="mt-4 text-[12px] font-bold uppercase tracking-[1px] text-smoke">Your category</Text>
@@ -106,6 +139,12 @@ export default function ProviderHubScreen() {
             <View className="mt-4 flex-row"><View className="mr-2 flex-1"><Text className="text-[12px] font-bold uppercase tracking-[1px] text-smoke">Location</Text><TextInput value={location} onChangeText={setLocation} placeholder="e.g. Lekki Phase 1" placeholderTextColor="#A8B2C1" className="mt-2 rounded-[14px] bg-cream px-3.5 py-3.5 text-[14px] text-ink" /></View><View className="w-[116px]"><Text className="text-[12px] font-bold uppercase tracking-[1px] text-smoke">From</Text><TextInput value={startingPrice} onChangeText={setStartingPrice} placeholder="₦15,000" placeholderTextColor="#A8B2C1" className="mt-2 rounded-[14px] bg-cream px-3.5 py-3.5 text-[14px] text-ink" keyboardType="number-pad" /></View></View>
             <Pressable onPress={save} className="mt-5 flex-row items-center justify-center rounded-full bg-banner py-3.5 active:opacity-80"><Text className="text-[13px] font-bold text-white">Save provider profile</Text><Feather name="check" size={16} color="#FFFFFF" style={{ marginLeft: 8 }} /></Pressable>
           </View>
+
+           <View className="mt-5 rounded-[23px] bg-white p-4">
+             <View className="flex-row items-center justify-between"><View><Text className="text-[17px] font-bold text-ink">Portfolio</Text><Text className="mt-1 text-[12px] text-smoke">Show the work you want to be booked for.</Text></View><Pressable onPress={addPortfolioImage} className="h-9 w-9 items-center justify-center rounded-full bg-cream active:opacity-70"><Feather name="plus" size={18} color="#2D6CDF" /></Pressable></View>
+             {portfolioUris.length > 0 ? <View className="mt-4 flex-row flex-wrap">{portfolioUris.map((uri, index) => <View key={`${uri}-${index}`} className="mb-3 mr-3 overflow-hidden rounded-[16px]"><Image source={{ uri }} style={{ width: 98, height: 98 }} resizeMode="cover" /><Pressable onPress={() => setPortfolioUris((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-1.5 top-1.5 h-7 w-7 items-center justify-center rounded-full bg-white/90"><Feather name="x" size={14} color="#16253F" /></Pressable></View>)}</View> : <Pressable onPress={addPortfolioImage} className="mt-4 items-center rounded-[17px] border border-dashed border-line bg-cream px-4 py-5 active:opacity-75"><View className="h-9 w-9 items-center justify-center rounded-full bg-white"><Feather name="image" size={17} color="#2D6CDF" /></View><Text className="mt-2 text-[13px] font-bold text-ink">Add your first work sample</Text><Text className="mt-1 text-center text-[11px] text-smoke">You can add up to six images.</Text></Pressable>}
+             {portfolioUris.length > 0 && <Pressable onPress={addPortfolioImage} className="mt-1 self-start"><Text className="text-[12px] font-bold text-banner">Add another image</Text></Pressable>}
+           </View>
 
           <Text className="mt-8 text-[21px] font-bold text-ink">Your hub</Text>
            <View className="mt-4 flex-row"><View className="mr-2 flex-1 rounded-[20px] bg-white p-4"><Ionicons name="calendar-outline" size={18} color="#2D6CDF" /><Text className="mt-4 text-[22px] font-bold text-ink">{bookings.filter((booking) => booking.status === 'upcoming').length}</Text><Text className="mt-1 text-[12px] text-smoke">Upcoming bookings</Text></View><View className="ml-2 flex-1 rounded-[20px] bg-white p-4"><Ionicons name="wallet-outline" size={18} color="#2D6CDF" /><Text className="mt-4 text-[22px] font-bold text-ink">₦0</Text><Text className="mt-1 text-[12px] text-smoke">This month</Text></View></View>

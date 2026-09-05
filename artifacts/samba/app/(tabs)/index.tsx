@@ -68,7 +68,7 @@ export default function HomeScreen() {
           </View>
           <View className="mt-5 flex-row rounded-[17px] bg-cream p-1">
             <Pressable onPress={() => setMode('home')} className={'flex-1 flex-row items-center justify-center rounded-[14px] py-3 ' + (mode === 'home' ? 'bg-white' : '')}><Feather name="home" size={15} color={mode === 'home' ? '#D86D55' : '#8B8581'} /><Text className={'ml-2 text-[13px] font-semibold ' + (mode === 'home' ? 'text-ink' : 'text-smoke')}>At home</Text></Pressable>
-            <Pressable onPress={() => setMode('shop')} className={'flex-1 flex-row items-center justify-center rounded-[14px] py-3 ' + (mode === 'shop' ? 'bg-white' : '')}><Feather name="map-pin" size={15} color={mode === 'shop' ? '#D86D55' : '#8B8581'} /><Text className={'ml-2 text-[13px] font-semibold ' + (mode === 'shop' ? 'text-ink' : 'text-smoke')}>At their place</Text></Pressable>
+            <Pressable onPress={() => setMode('shop')} className={'flex-1 flex-row items-center justify-center rounded-[14px] py-3 ' + (mode === 'shop' ? 'bg-white' : '')}><Feather name="map-pin" size={15} color={mode === 'shop' ? '#D86D55' : '#8B8581'} /><Text className={'ml-2 text-[13px] font-semibold ' + (mode === 'shop' ? 'text-ink' : 'text-smoke')}>In-Shop</Text></Pressable>
           </View>
         </View>
 
