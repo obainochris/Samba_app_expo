@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export type ChatMessage = {
   id: string;
@@ -12,11 +12,15 @@ export type ChatMessage = {
 type MessageContextValue = {
   conversations: Record<string, ChatMessage[]>;
   sendMessage: (providerId: string, text: string) => Promise<void>;
+  sendProviderMessage: (providerId: string, text: string) => Promise<void>;
+  markConversationRead: (providerId: string) => Promise<void>;
+  unreadCounts: Record<string, number>;
   getMessages: (providerId: string) => ChatMessage[];
 };
 
 const MessageContext = createContext<MessageContextValue | null>(null);
 const STORAGE_KEY = '@samba/conversations';
+const UNREAD_STORAGE_KEY = '@samba/conversation-unread-counts';
 
 function simulatedReply(text: string) {
   const normalized = text.toLowerCase();
@@ -37,47 +41,99 @@ function simulatedReply(text: string) {
 
 export function MessageProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Record<string, ChatMessage[]>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const conversationsRef = useRef<Record<string, ChatMessage[]>>({});
+  const unreadCountsRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((value) => {
-      if (value) setConversations(JSON.parse(value) as Record<string, ChatMessage[]>);
+    Promise.all([AsyncStorage.getItem(STORAGE_KEY), AsyncStorage.getItem(UNREAD_STORAGE_KEY)]).then(([value, unreadValue]) => {
+      const storedConversations = value ? JSON.parse(value) as Record<string, ChatMessage[]> : {};
+      const storedUnreadCounts = unreadValue
+        ? JSON.parse(unreadValue) as Record<string, number>
+        : Object.fromEntries(
+            Object.entries(storedConversations).map(([providerId, messages]) => [
+              providerId,
+              messages.filter((message) => message.sender === 'client').length,
+            ]),
+          );
+
+      conversationsRef.current = storedConversations;
+      unreadCountsRef.current = storedUnreadCounts;
+      setConversations(storedConversations);
+      setUnreadCounts(storedUnreadCounts);
     });
   }, []);
 
-  const persist = (next: Record<string, ChatMessage[]>) => {
+  const persistConversations = (next: Record<string, ChatMessage[]>) => {
+    conversationsRef.current = next;
     setConversations(next);
     return AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
 
-  const sendMessage = async (providerId: string, text: string) => {
+  const persistUnreadCounts = (next: Record<string, number>) => {
+    unreadCountsRef.current = next;
+    setUnreadCounts(next);
+    return AsyncStorage.setItem(UNREAD_STORAGE_KEY, JSON.stringify(next));
+  };
+
+  const appendMessage = async (message: ChatMessage, unreadCount?: number) => {
+    const nextConversations = {
+      ...conversationsRef.current,
+      [message.providerId]: [...(conversationsRef.current[message.providerId] ?? []), message],
+    };
+    const writes = [persistConversations(nextConversations)];
+
+    if (unreadCount !== undefined) {
+      const nextUnreadCounts = { ...unreadCountsRef.current, [message.providerId]: unreadCount };
+      writes.push(persistUnreadCounts(nextUnreadCounts));
+    }
+
+    await Promise.all(writes);
+  };
+
+  const sendMessage = useCallback(async (providerId: string, text: string) => {
     const message: ChatMessage = {
-      id: `${Date.now()}-client`,
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}-client`,
       providerId,
       sender: 'client',
       text,
       createdAt: Date.now(),
     };
-    const next = { ...conversations, [providerId]: [...(conversations[providerId] ?? []), message] };
-    await persist(next);
+    const nextUnreadCount = (unreadCountsRef.current[providerId] ?? 0) + 1;
+    await appendMessage(message, nextUnreadCount);
 
     setTimeout(() => {
       const reply: ChatMessage = {
-        id: `${Date.now()}-provider`,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}-provider`,
         providerId,
         sender: 'provider',
         text: simulatedReply(text),
         createdAt: Date.now(),
       };
-      setConversations((current) => {
-        const updated = { ...current, [providerId]: [...(current[providerId] ?? []), reply] };
-        void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
+      void appendMessage(reply);
     }, 900);
-  };
+  }, []);
 
-  const getMessages = (providerId: string) => conversations[providerId] ?? [];
-  const value = useMemo(() => ({ conversations, sendMessage, getMessages }), [conversations]);
+  const sendProviderMessage = useCallback(async (providerId: string, text: string) => {
+    await appendMessage({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}-provider`,
+      providerId,
+      sender: 'provider',
+      text,
+      createdAt: Date.now(),
+    }, 0);
+  }, []);
+
+  const markConversationRead = useCallback(async (providerId: string) => {
+    if (!unreadCountsRef.current[providerId]) return;
+    await persistUnreadCounts({ ...unreadCountsRef.current, [providerId]: 0 });
+  }, []);
+
+  const getMessages = useCallback((providerId: string) => conversations[providerId] ?? [], [conversations]);
+  const value = useMemo(
+    () => ({ conversations, sendMessage, sendProviderMessage, markConversationRead, unreadCounts, getMessages }),
+    [conversations, sendMessage, sendProviderMessage, markConversationRead, unreadCounts, getMessages],
+  );
 
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
 }

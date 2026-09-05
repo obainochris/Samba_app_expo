@@ -2,11 +2,13 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { BrandMark } from '@/components/BrandMark';
-import { AccountMode, useAccount } from '@/context/AccountContext';
+import { useAccount } from '@/context/AccountContext';
+import { useMessages } from '@/context/MessageContext';
+import { providers } from '@/data/providers';
 
 const categories = ['Hair stylist', 'Barber', 'Makeup artist'];
 
@@ -14,6 +16,7 @@ export default function ProviderHubScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { providerAccount, saveProviderAccount, setMode, toggleProviderLive } = useAccount();
+  const { conversations, unreadCounts } = useMessages();
   const [displayName, setDisplayName] = useState(providerAccount.displayName);
   const [category, setCategory] = useState(providerAccount.category);
   const [specialty, setSpecialty] = useState(providerAccount.specialty);
@@ -39,6 +42,10 @@ export default function ProviderHubScreen() {
     await Haptics.selectionAsync();
     await toggleProviderLive();
   };
+
+  const conversationProviders = providers.filter((provider) => conversations[provider.id]?.length);
+  const unreadRequestCount = conversationProviders.reduce((total, provider) => total + (unreadCounts[provider.id] ?? 0), 0);
+  const openRequests = () => router.push({ pathname: '/messages', params: { mode: 'provider' } });
 
   return (
     <View className="flex-1 bg-paper">
@@ -80,7 +87,8 @@ export default function ProviderHubScreen() {
 
           <Text className="mt-8 text-[21px] font-bold text-ink">Your hub</Text>
           <View className="mt-4 flex-row"><View className="mr-2 flex-1 rounded-[20px] bg-white p-4"><Ionicons name="calendar-outline" size={18} color="#2D6CDF" /><Text className="mt-4 text-[22px] font-bold text-ink">0</Text><Text className="mt-1 text-[12px] text-smoke">Upcoming bookings</Text></View><View className="ml-2 flex-1 rounded-[20px] bg-white p-4"><Ionicons name="wallet-outline" size={18} color="#2D6CDF" /><Text className="mt-4 text-[22px] font-bold text-ink">₦0</Text><Text className="mt-1 text-[12px] text-smoke">This month</Text></View></View>
-          <View className="mt-3 flex-row items-center rounded-[20px] border border-line bg-white p-4"><View className="h-10 w-10 items-center justify-center rounded-full bg-blush"><Ionicons name="sparkles-outline" size={18} color="#2D6CDF" /></View><View className="ml-3 flex-1"><Text className="text-[14px] font-bold text-ink">No new client requests</Text><Text className="mt-1 text-[12px] leading-4 text-smoke">Go live when you are ready to start receiving bookings.</Text></View><Feather name="chevron-right" size={17} color="#A8B2C1" /></View>
+           <View className="mt-3 flex-row items-center rounded-[20px] border border-line bg-white p-4"><View className={'h-10 w-10 items-center justify-center rounded-full ' + (unreadRequestCount > 0 ? 'bg-blush' : 'bg-cream')}><Ionicons name={unreadRequestCount > 0 ? 'chatbubbles-outline' : 'sparkles-outline'} size={18} color="#2D6CDF" /></View><View className="ml-3 flex-1"><Text className="text-[14px] font-bold text-ink">{unreadRequestCount > 0 ? `${unreadRequestCount} new client message${unreadRequestCount === 1 ? '' : 's'}` : conversationProviders.length > 0 ? 'Your client conversations' : 'No new client requests'}</Text><Text className="mt-1 text-[12px] leading-4 text-smoke">{unreadRequestCount > 0 ? 'Open your inbox to reply before the next booking.' : conversationProviders.length > 0 ? 'Review your conversations and keep clients moving.' : 'Go live when you are ready to start receiving bookings.'}</Text></View><Pressable onPress={openRequests} className="h-10 w-10 items-center justify-center rounded-full bg-cream active:opacity-70"><Feather name="chevron-right" size={17} color="#A8B2C1" /></Pressable></View>
+           {conversationProviders.length > 0 && <View className="mt-4"><View className="flex-row items-center justify-between"><Text className="text-[16px] font-bold text-ink">Client inbox</Text><Pressable onPress={openRequests} className="active:opacity-70"><Text className="text-[12px] font-bold text-banner">View all</Text></Pressable></View>{conversationProviders.map((provider) => { const providerMessages = conversations[provider.id] ?? []; const lastMessage = providerMessages[providerMessages.length - 1]; const unreadCount = unreadCounts[provider.id] ?? 0; return <Pressable key={provider.id} onPress={() => router.push({ pathname: '/messages/[providerId]', params: { providerId: provider.id, mode: 'provider' } })} className="mt-3 flex-row items-center rounded-[20px] bg-white p-3 active:opacity-80"><Image source={provider.image} className="h-12 w-12 rounded-[15px]" resizeMode="cover" /><View className="ml-3 flex-1"><View className="flex-row items-center justify-between"><Text className="text-[14px] font-bold text-ink">Client consultation</Text>{unreadCount > 0 && <View className="min-w-[22px] items-center rounded-full bg-terracotta px-1.5 py-1"><Text className="text-[10px] font-bold text-white">{unreadCount}</Text></View>}</View><Text className="mt-1 text-[11px] text-smoke">About {provider.name}</Text><Text className="mt-1 text-[12px] text-smoke" numberOfLines={1}>{lastMessage?.text}</Text></View><Feather name="chevron-right" size={17} color="#A8B2C1" style={{ marginLeft: 8 }} /></Pressable>; })}</View>}
         </View>
       </KeyboardAwareScrollViewCompat>
     </View>
