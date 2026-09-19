@@ -15,13 +15,15 @@ const times = ['10:00 AM', '12:30 PM', '3:00 PM', '5:30 PM'];
 type LocationStatus = 'idle' | 'requesting' | 'validated' | 'out-of-range' | 'denied' | 'error';
 
 export default function ProviderDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, serviceName: requestedServiceName } = useLocalSearchParams<{ id: string; serviceName?: string }>();
   const provider = getProvider(id ?? '');
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { addBooking } = useBookings();
   const [mode, setMode] = useState<ServiceMode>('home');
-  const [selectedService, setSelectedService] = useState(0);
+  const requestedService = Array.isArray(requestedServiceName) ? requestedServiceName[0] : requestedServiceName;
+  const initialServiceIndex = provider?.services.findIndex((item) => item.name === requestedService) ?? -1;
+  const [selectedService, setSelectedService] = useState(initialServiceIndex >= 0 ? initialServiceIndex : 0);
   const [selectedDate, setSelectedDate] = useState(dates[0]);
   const [selectedTime, setSelectedTime] = useState(times[0]);
   const [addressLabel, setAddressLabel] = useState('');

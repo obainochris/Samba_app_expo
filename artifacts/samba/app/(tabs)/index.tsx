@@ -88,7 +88,7 @@ export default function HomeScreen() {
 
         <View className="mx-5 mt-8 overflow-hidden rounded-[25px] bg-banner p-5">
           <View className="flex-row items-start justify-between"><View className="max-w-[235px]"><Text className="text-[12px] font-semibold uppercase tracking-[1.2px] text-peach">Samba care</Text><Text className="mt-2 text-[23px] font-bold leading-7 text-white">Your next good hair day is closer than you think.</Text><Text className="mt-2 text-[13px] leading-5 text-[#D7CECA]">Book a trusted beauty pro in just a few taps.</Text></View><View className="h-14 w-14 items-center justify-center rounded-full bg-terracotta"><Ionicons name="sparkles" size={26} color="#FFFFFF" /></View></View>
-          <Pressable onPress={() => router.push('/explore')} className="mt-5 self-start rounded-full bg-white px-4 py-2.5 active:opacity-80"><Text className="text-[12px] font-bold text-ink">Explore providers</Text></Pressable>
+           <Pressable onPress={() => router.push('/lookbook')} className="mt-5 self-start rounded-full bg-white px-4 py-2.5 active:opacity-80"><Text className="text-[12px] font-bold text-ink">See the style lookbook</Text></Pressable>
         </View>
       </ScrollView>
     </View>

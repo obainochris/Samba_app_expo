@@ -30,6 +30,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="lookbook" options={{ headerShown: false }} />
       <Stack.Screen name="provider/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="house-call/[bookingId]" options={{ headerShown: false }} />
       <Stack.Screen name="provider-hub" options={{ headerShown: false }} />
