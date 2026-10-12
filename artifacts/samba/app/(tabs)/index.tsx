@@ -58,7 +58,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <View className="mt-8">
-            <Text className="text-[29px] font-bold leading-9 tracking-[-0.8px] text-ink">Good morning, Tolu.</Text>
+            <Text className="text-[29px] font-bold leading-9 tracking-[-0.8px] text-ink">Good morning, Obaino.</Text>
             <Text className="mt-1 text-[15px] leading-6 text-smoke">Feel good, look good, wherever you are.</Text>
           </View>
           <View className="mt-6 flex-row items-center rounded-[18px] bg-white px-4 py-3.5">
