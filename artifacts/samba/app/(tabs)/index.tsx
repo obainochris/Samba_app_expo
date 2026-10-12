@@ -50,14 +50,17 @@ export default function HomeScreen() {
     <View className="flex-1 bg-paper">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 116 }}>
         <View className="px-5" style={{ paddingTop: insets.top + 18 }}>
-          <View className="flex-row items-center justify-between">
-            <BrandMark />
+          <View className="flex-row items-start justify-between">
+            <View>
+              <BrandMark />
+              <Text className="ml-11 mt-1 max-w-[260px] text-[10px] leading-4 text-smoke">Your No 1 Marketplace for Beauty service provider</Text>
+            </View>
             <Pressable className="h-10 w-10 items-center justify-center rounded-full border border-line bg-white active:opacity-70" onPress={() => router.push('/profile')}>
               <Feather name="bell" size={18} color="#27221F" />
               <View className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-terracotta" />
             </Pressable>
           </View>
-          <View className="mt-8">
+          <View className="mt-6">
             <Text className="text-[29px] font-bold leading-9 tracking-[-0.8px] text-ink">Good morning, Obaino.</Text>
             <Text className="mt-1 text-[15px] leading-6 text-smoke">Feel good, look good, wherever you are.</Text>
           </View>
