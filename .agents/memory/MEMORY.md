@@ -1,3 +1,4 @@
 - [NativeWind Expo web setup](nativewind-expo-web.md) — add the CSS interop peer and use class-based dark mode for Expo web startup.
 - [Expo preview process reset](expo-preview-process-reset.md) — stop the managed Expo workflow before restarting when duplicate port processes cause stale or incorrect preview frames.
 - [Expo build port conflict](expo-build-port-conflict.md) — stop the mockup preview before Samba's static build because both use Metro/Vite port 8081.
+- [OpenAPI/Zod compatibility](openapi-zod-compatibility.md) — keep Orval's generated validators compatible with the Zod major version used by api-zod.

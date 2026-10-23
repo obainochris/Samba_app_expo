@@ -50,6 +50,7 @@ export default function BookingsScreen() {
                       {isHouseCall && <View className="mt-2 flex-row items-center justify-between"><Text className="text-[11px] text-smoke">{booking.distanceKm?.toFixed(1) ?? '—'} km house call</Text><Text className="text-[11px] text-smoke">{booking.travelFee ? `Includes ₦${booking.travelFee.toLocaleString('en-NG')} travel` : ''}</Text></View>}
                     </View>
                     {isHouseCall && <Pressable onPress={() => router.push({ pathname: '/house-call/[bookingId]', params: { bookingId: booking.id } })} className="mt-4 flex-row items-center justify-center rounded-full bg-banner py-3 active:opacity-80"><Feather name="navigation" size={14} color="#FFFFFF" /><Text className="ml-2 text-[12px] font-bold text-white">{trackingStatus === 'confirmed' ? 'View house call details' : 'Track your provider'}</Text></Pressable>}
+                    <Pressable onPress={() => router.push({ pathname: '/report-issue', params: { bookingId: booking.id } })} className="mt-3 self-start"><Text className="text-[12px] font-semibold text-banner">Report a service issue</Text></Pressable>
                     <Pressable onPress={() => cancel(booking.id)} className="mt-3 self-start"><Text className="text-[12px] font-semibold text-smoke">Cancel booking</Text></Pressable>
                   </View>
                 );

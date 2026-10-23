@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Samba marketplace and administrator API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: marketplace
+    description: Public provider discovery and client actions
+  - name: admin
+    description: Protected marketplace administration
 paths:
   /healthz:
     get:
@@ -24,13 +28,584 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /providers:
+    get:
+      operationId: listMarketplaceProviders
+      tags: [marketplace]
+      summary: List active approved providers
+      responses:
+        "200":
+          description: Marketplace providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketplaceProvider"
+  /bookings:
+    get:
+      operationId: listMyBookings
+      tags: [marketplace]
+      summary: List the signed-in client's bookings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The client's bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      operationId: createBooking
+      tags: [marketplace]
+      summary: Create a shared booking
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+  /bookings/{bookingId}/cancel:
+    patch:
+      operationId: cancelBooking
+      tags: [marketplace]
+      summary: Cancel one of the client's bookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+  /issues:
+    post:
+      operationId: createIssue
+      tags: [marketplace]
+      summary: Report a service or booking issue
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueInput"
+      responses:
+        "201":
+          description: Issue report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+  /provider/bookings:
+    get:
+      operationId: listProviderBookings
+      tags: [marketplace]
+      summary: List bookings assigned to the signed-in provider account
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Provider's bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderBooking"
+  /provider/bookings/{bookingId}/tracking:
+    patch:
+      operationId: updateProviderBookingTracking
+      tags: [marketplace]
+      summary: Update tracking for a booking assigned to the provider
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderBookingTrackingUpdate"
+      responses:
+        "200":
+          description: Updated provider booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderBooking"
+  /admin/me:
+    get:
+      operationId: getAdminAccess
+      tags: [admin]
+      summary: Check whether the signed-in account is an administrator
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Access result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccess"
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags: [admin]
+      summary: Get marketplace overview metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Overview metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+  /admin/providers:
+    get:
+      operationId: listAdminProviders
+      tags: [admin]
+      summary: List marketplace provider profiles and approval states
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Provider profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminProvider"
+  /admin/providers/{providerId}:
+    patch:
+      operationId: updateAdminProvider
+      tags: [admin]
+      summary: Update a provider profile, owner, or approval state
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: providerId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderUpdate"
+      responses:
+        "200":
+          description: Updated provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProvider"
+  /admin/clients:
+    get:
+      operationId: listAdminClients
+      tags: [admin]
+      summary: List Samba client accounts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Client accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminClient"
+  /admin/clients/{userId}:
+    patch:
+      operationId: updateAdminClient
+      tags: [admin]
+      summary: Update a client account's access
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientUpdate"
+      responses:
+        "200":
+          description: Updated client account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminClient"
+  /admin/bookings:
+    get:
+      operationId: listAdminBookings
+      tags: [admin]
+      summary: List shared bookings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Recent bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminBooking"
+  /admin/bookings/{bookingId}:
+    patch:
+      operationId: updateAdminBooking
+      tags: [admin]
+      summary: Update booking status
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingUpdate"
+      responses:
+        "200":
+          description: Updated booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBooking"
+  /admin/issues:
+    get:
+      operationId: listAdminIssues
+      tags: [admin]
+      summary: List service issues reported by clients
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Service issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminIssue"
+  /admin/issues/{issueId}:
+    patch:
+      operationId: updateAdminIssue
+      tags: [admin]
+      summary: Update a service issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: issueId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueUpdate"
+      responses:
+        "200":
+          description: Updated service issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminIssue"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
-
+      required: [status]
+    ProviderService:
+      type: object
+      properties:
+        name: { type: string }
+        duration: { type: string }
+        price: { type: string }
+      required: [name, duration, price]
+    MarketplaceProvider:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        firstName: { type: string }
+        category: { type: string }
+        specialty: { type: string }
+        rating: { type: number }
+        reviews: { type: number }
+        location: { type: string }
+        distance: { type: string }
+        price: { type: string }
+        verified: { type: boolean }
+        availableToday: { type: boolean }
+        bio: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        serviceRadiusKm: { type: number }
+        baseTravelFee: { type: number }
+        travelFeePerKm: { type: number }
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderService"
+        isLive: { type: boolean }
+        approvalStatus:
+          type: string
+          enum: [pending, approved, rejected]
+      required: [id, name, firstName, category, specialty, rating, reviews, location, distance, price, verified, availableToday, bio, latitude, longitude, serviceRadiusKm, baseTravelFee, travelFeePerKm, services, isLive, approvalStatus]
+    AdminProvider:
+      allOf:
+        - $ref: "#/components/schemas/MarketplaceProvider"
+        - type: object
+          properties:
+            ownerUserId:
+              type: ["string", "null"]
+          required: [ownerUserId]
+    ProviderUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        category:
+          type: string
+          enum: [Hair, Barber, Makeup]
+        specialty:
+          type: string
+          minLength: 1
+          maxLength: 160
+        location:
+          type: string
+          minLength: 1
+          maxLength: 160
+        distance:
+          type: string
+          maxLength: 80
+        price:
+          type: string
+          minLength: 1
+          maxLength: 80
+        verified:
+          type: boolean
+        availableToday:
+          type: boolean
+        bio:
+          type: string
+          maxLength: 2000
+        latitude:
+          type: number
+        longitude:
+          type: number
+        serviceRadiusKm:
+          type: number
+        baseTravelFee:
+          type: number
+        travelFeePerKm:
+          type: number
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderService"
+        isLive: { type: boolean }
+        approvalStatus:
+          type: string
+          enum: [pending, approved, rejected]
+        ownerUserId:
+          type: ["string", "null"]
+    BookingInput:
+      type: object
+      properties:
+        providerId: { type: string }
+        providerName: { type: string }
+        serviceName: { type: string }
+        date: { type: string }
+        time: { type: string }
+        mode:
+          type: string
+          enum: [home, shop]
+        price: { type: string }
+        servicePrice:
+          type: ["string", "null"]
+        location: { type: string }
+        clientAddress:
+          type: ["string", "null"]
+        gateInstructions:
+          type: ["string", "null"]
+        distanceKm:
+          type: ["number", "null"]
+        travelFee:
+          type: ["number", "null"]
+        etaMinutes:
+          type: ["number", "null"]
+        trackingStatus:
+          type: ["string", "null"]
+          enum: [confirmed, driving, arrived, in-progress, completed, null]
+      required: [providerId, providerName, serviceName, date, time, mode, price, location]
+    Booking:
+      allOf:
+        - $ref: "#/components/schemas/BookingInput"
+        - type: object
+          properties:
+            id: { type: string }
+            totalAmountNaira: { type: number }
+            status:
+              type: string
+              enum: [upcoming, completed, cancelled]
+          required: [id, totalAmountNaira, status]
+    AdminBooking:
+      allOf:
+        - $ref: "#/components/schemas/Booking"
+        - type: object
+          properties:
+            clientUserId: { type: string }
+            clientName: { type: string }
+            clientEmail: { type: string }
+            createdAt: { type: string, format: date-time }
+          required: [clientUserId, clientName, clientEmail, createdAt]
+    ProviderBooking:
+      allOf:
+        - $ref: "#/components/schemas/AdminBooking"
+    ProviderBookingTrackingUpdate:
+      type: object
+      properties:
+        trackingStatus:
+          type: string
+          enum: [confirmed, driving, arrived, in-progress, completed]
+      required: [trackingStatus]
+    BookingUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [upcoming, completed, cancelled]
+        trackingStatus:
+          type: ["string", "null"]
+          enum: [confirmed, driving, arrived, in-progress, completed, null]
+    IssueInput:
+      type: object
+      properties:
+        bookingId:
+          type: ["string", "null"]
+        category:
+          type: string
+          enum: [provider, booking, payment, safety, other]
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+      required: [category, description]
+    Issue:
+      allOf:
+        - $ref: "#/components/schemas/IssueInput"
+        - type: object
+          properties:
+            id: { type: string }
+            status:
+              type: string
+              enum: [open, reviewing, resolved]
+          required: [id, status]
+    AdminIssue:
+      allOf:
+        - $ref: "#/components/schemas/Issue"
+        - type: object
+          properties:
+            clientUserId: { type: string }
+            clientEmail: { type: string }
+            createdAt: { type: string, format: date-time }
+          required: [clientUserId, clientEmail, createdAt]
+    IssueUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, reviewing, resolved]
+      required: [status]
+    AdminClient:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        imageUrl: { type: string }
+        banned: { type: boolean }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, firstName, lastName, imageUrl, banned, createdAt]
+    ClientUpdate:
+      type: object
+      properties:
+        banned: { type: boolean }
+      required: [banned]
+    AdminAccess:
+      type: object
+      properties:
+        isAdmin: { type: boolean }
+        email: { type: string }
+      required: [isAdmin, email]
+    AdminOverview:
+      type: object
+      properties:
+        clientCount: { type: number }
+        providerCount: { type: number }
+        pendingProviderCount: { type: number }
+        upcomingBookingCount: { type: number }
+        completedBookingCount: { type: number }
+        openIssueCount: { type: number }
+        grossRevenueNaira: { type: number }
+      required: [clientCount, providerCount, pendingProviderCount, upcomingBookingCount, completedBookingCount, openIssueCount, grossRevenueNaira]

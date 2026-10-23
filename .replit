@@ -29,3 +29,8 @@ externalPort = 8080
 [[ports]]
 localPort = 8081
 externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+SAMBA_ADMIN_EMAILS = "obainochrisy@gmail.com"

@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ClerkLoaded, ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/expo';
+import { setAuthTokenGetter, setBaseUrl } from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   Inter_400Regular,
@@ -20,6 +23,9 @@ import { AccountProvider } from '@/context/AccountContext';
 import { MessageProvider } from '@/context/MessageContext';
 import '../global.css';
 
+const apiDomain = process.env.EXPO_PUBLIC_DOMAIN;
+if (apiDomain) setBaseUrl(`https://${apiDomain}`);
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -34,10 +40,32 @@ function RootLayoutNav() {
       <Stack.Screen name="provider/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="house-call/[bookingId]" options={{ headerShown: false }} />
       <Stack.Screen name="provider-hub" options={{ headerShown: false }} />
+      <Stack.Screen name="admin/index" options={{ headerShown: false }} />
+      <Stack.Screen name="report-issue" options={{ headerShown: false }} />
       <Stack.Screen name="messages" options={{ headerShown: false }} />
       <Stack.Screen name="messages/[providerId]" options={{ headerShown: false }} />
     </Stack>
   );
+}
+
+function ApiAuthBridge() {
+  const { getToken, userId } = useAuth();
+  const previousUserId = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (previousUserId.current !== userId) {
+      queryClient.clear();
+      previousUserId.current = userId;
+    }
+    if (Platform.OS === 'web') {
+      setAuthTokenGetter(null);
+      return;
+    }
+    setAuthTokenGetter(() => getToken());
+    return () => setAuthTokenGetter(null);
+  }, [getToken, userId]);
+
+  return null;
 }
 
 export default function RootLayout() {
@@ -68,6 +96,7 @@ export default function RootLayout() {
       <ErrorBoundary>
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache} proxyUrl={proxyUrl}>
           <ClerkLoaded>
+            <ApiAuthBridge />
             <QueryClientProvider client={queryClient}>
               <BookingProvider>
                 <AccountProvider>

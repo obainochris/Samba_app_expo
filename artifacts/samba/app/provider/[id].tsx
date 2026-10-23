@@ -5,9 +5,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getProvider, useBookings } from '@/context/BookingContext';
+import { useBookings } from '@/context/BookingContext';
 import { calculateTravelFee, distanceInKm, formatNaira, getEtaMinutes, parseNaira } from '@/utils/house-call';
 import { ServiceMode } from '@/data/providers';
+import { getListMarketplaceProvidersQueryKey, useListMarketplaceProviders } from '@workspace/api-client-react';
+import { getMarketplaceProvider } from '@/utils/marketplace';
 
 const dates = ['Today', 'Sat, 5 Oct', 'Sun, 6 Oct', 'Mon, 7 Oct'];
 const times = ['10:00 AM', '12:30 PM', '3:00 PM', '5:30 PM'];
@@ -16,7 +18,8 @@ type LocationStatus = 'idle' | 'requesting' | 'validated' | 'out-of-range' | 'de
 
 export default function ProviderDetailScreen() {
   const { id, serviceName: requestedServiceName } = useLocalSearchParams<{ id: string; serviceName?: string }>();
-  const provider = getProvider(id ?? '');
+  const marketplaceQuery = useListMarketplaceProviders({ query: { queryKey: getListMarketplaceProvidersQueryKey(), refetchInterval: 30_000 } });
+  const provider = getMarketplaceProvider(id ?? '', marketplaceQuery.data, marketplaceQuery.isSuccess);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { addBooking } = useBookings();
@@ -80,25 +83,31 @@ export default function ProviderDetailScreen() {
     }
 
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const bookingId = await addBooking({
-      providerId: provider.id,
-      providerName: provider.name,
-      serviceName: service.name,
-      date: selectedDate,
-      time: selectedTime,
-      mode,
-      price: formatNaira(totalPrice),
-      servicePrice: service.price,
-      location: provider.location,
-      ...(mode === 'home' ? {
-        clientAddress: addressLabel.trim(),
-        gateInstructions: gateInstructions.trim(),
-        distanceKm: distanceKm ?? undefined,
-        travelFee,
-        etaMinutes: getEtaMinutes(distanceKm ?? 0),
-        trackingStatus: 'confirmed' as const,
-      } : {}),
-    });
+    let bookingId: string;
+    try {
+      bookingId = await addBooking({
+        providerId: provider.id,
+        providerName: provider.name,
+        serviceName: service.name,
+        date: selectedDate,
+        time: selectedTime,
+        mode,
+        price: formatNaira(totalPrice),
+        servicePrice: service.price,
+        location: provider.location,
+        ...(mode === 'home' ? {
+          clientAddress: addressLabel.trim(),
+          gateInstructions: gateInstructions.trim(),
+          distanceKm: distanceKm ?? undefined,
+          travelFee,
+          etaMinutes: getEtaMinutes(distanceKm ?? 0),
+          trackingStatus: 'confirmed' as const,
+        } : {}),
+      });
+    } catch {
+      Alert.alert('Booking not saved', 'Samba could not save this booking. Check your connection and try again.');
+      return;
+    }
     Alert.alert(
       mode === 'home' ? 'House call confirmed' : 'Booking confirmed',
       mode === 'home'

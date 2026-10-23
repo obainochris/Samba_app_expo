@@ -3,8 +3,10 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getListMarketplaceProvidersQueryKey, useListMarketplaceProviders } from '@workspace/api-client-react';
 import { BrandMark } from '@/components/BrandMark';
 import { categories, Provider, providers, ServiceMode } from '@/data/providers';
+import { mergeMarketplaceProviders } from '@/utils/marketplace';
 
 function ProviderCard({ provider, onPress }: { provider: Provider; onPress: () => void }) {
   return (
@@ -40,11 +42,16 @@ export default function HomeScreen() {
   const [mode, setMode] = useState<ServiceMode>('home');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const filtered = useMemo(() => providers.filter((provider) => {
+  const marketplaceQuery = useListMarketplaceProviders({ query: { queryKey: getListMarketplaceProvidersQueryKey(), refetchInterval: 30_000 } });
+  const providerList = useMemo(
+    () => marketplaceQuery.isError ? [] : mergeMarketplaceProviders(marketplaceQuery.data),
+    [marketplaceQuery.data, marketplaceQuery.isError],
+  );
+  const filtered = useMemo(() => providerList.filter((provider) => {
     const matchesCategory = selectedCategory === 'All' || provider.category === selectedCategory;
     const query = search.toLowerCase();
     return matchesCategory && (!query || provider.name.toLowerCase().includes(query) || provider.specialty.toLowerCase().includes(query));
-  }), [search, selectedCategory]);
+  }), [providerList, search, selectedCategory]);
 
   return (
     <View className="flex-1 bg-paper">
@@ -87,6 +94,7 @@ export default function HomeScreen() {
         <View className="mt-8">
           <View className="flex-row items-end justify-between px-5"><View><Text className="text-[21px] font-bold tracking-[-0.4px] text-ink">Made for you</Text><Text className="mt-1 text-[13px] text-smoke">Top-rated pros around {mode === 'home' ? 'your home' : 'your area'}</Text></View><Pressable onPress={() => router.push('/explore')}><Text className="text-[13px] font-semibold text-terracotta">See all</Text></Pressable></View>
           {filtered.length > 0 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 }}>{filtered.map((provider) => <ProviderCard key={provider.id} provider={provider} onPress={() => router.push({ pathname: '/provider/[id]', params: { id: provider.id } })} />)}</ScrollView> : <View className="mx-5 mt-4 rounded-[22px] bg-white p-5"><Text className="text-[15px] font-semibold text-ink">No providers found</Text><Text className="mt-1 text-[13px] text-smoke">Try another service or search term.</Text></View>}
+          {marketplaceQuery.isError && <Text className="mx-5 mt-3 text-[12px] text-smoke">Provider listings could not be refreshed. Check your connection and try again.</Text>}
         </View>
 
         <View className="mx-5 mt-8 overflow-hidden rounded-[25px] bg-banner p-5">
